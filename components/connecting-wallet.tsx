@@ -62,7 +62,7 @@ export class ICPWalletManager {
       throw new Error("Not authenticated");
     }
 
-    const actor = Actor.createActor(/* your canister interface */, {
+    const actor = Actor.createActor(idl, {
       agent: new HttpAgent({
         identity: this.identity,
         host: "https://ic0.app"
