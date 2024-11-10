@@ -1,3 +1,12 @@
+Game plan:
+- connecting wallet and looking at the apps on the IPC
+- Go fund me for IPC
+
+
+
+
+
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
