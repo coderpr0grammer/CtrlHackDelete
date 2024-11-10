@@ -131,43 +131,41 @@ export const ICPProvider = ({ children }: WalletProviderProps) => {
   const HOST = "https://identity.ic0.app/";
   const MY_LEDGER_CANISTER_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 
-  const getUserBalance = async (
-    ): Promise<bigint | null> => {
-      if (!principal || !authClient) return null;
-  
-      try {
-        const identity = authClient.getIdentity();
+  const getUserBalance = async (): Promise<bigint | null> => {
+    if (!principal || !authClient) return null;
 
+    try {
+      const identity = authClient.getIdentity();
 
-        const agent = await createAgent({
-          identity,
-          host: HOST,
-        });
-  
-        const ledgerCanisterId = Principal.fromText(MY_LEDGER_CANISTER_ID);
+      const agent = await createAgent({
+        identity,
+        host: "https://ic0.app",
+        verifyQuerySignatures: false
+      });
 
-        const ledgerCanister = LedgerCanister.create({
-          agent,
-          canisterId: ledgerCanisterId,
-        });
-  
-        // Convert principal to account identifier
-        const accountId = AccountIdentifier.fromPrincipal({
-          principal: principal,
-        });
-  
-        // Call with the correct argument format
-        const balance = await ledgerCanister.accountBalance({
-          accountIdentifier: accountId.toHex(),
-        });
-  
-        return balance;
-      } catch (error) {
-        console.error('Failed to fetch user balance:', error);
-        throw error; // Re-throw to allow caller to handle specific errors
-      }
-    };
-  
+      const ledgerCanisterId = Principal.fromText(LEDGER_CANISTER_ID);
+
+      const ledgerCanister = LedgerCanister.create({
+        agent,
+        canisterId: ledgerCanisterId,
+      });
+
+      // Convert principal to account identifier
+      const accountId = AccountIdentifier.fromPrincipal({
+        principal: principal,
+      });
+
+      // Use accountBalance instead of balance
+      const balance = await ledgerCanister.accountBalance({
+        accountIdentifier: accountId,
+      });
+
+      return balance;
+    } catch (error) {
+      console.error('Failed to fetch user balance:', error);
+      return null;
+    }
+  };
 
   const handleTransfer = async (amount: number, recipientAddress: string) => {
 
