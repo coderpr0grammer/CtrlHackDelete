@@ -32,65 +32,69 @@ import {
 } from "@/components/ui/sidebar"
 import { useICP } from "@/app/infrastructure/ICP/ICPContext"
 import { Button } from "./ui/button"
+import { useEffect } from "react"
 
 export function NavUser() {
   const { isMobile } = useSidebar()
 
-  const { isConnected, principal, connect, disconnect } = useICP();
+  const { isConnected, principal, connect, disconnect, balance } = useICP();
 
+  useEffect(() => { 
+   console.log("balance", balance)
+  }, [balance])
   return (
     <SidebarMenu>
       <SidebarMenuItem>
 
         {isConnected ? (
           <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-           
-              
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-            >
-              <Avatar className="h-8 w-8 rounded-lg grayscale">
-                <AvatarImage src={`https://avatar.vercel.sh/${principal?.toString()}.png`} alt={principal?.toString()} />
+            <DropdownMenuTrigger asChild>
+              <SidebarMenuButton
 
-                <AvatarFallback className="rounded-lg">ICP</AvatarFallback>
-              </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                {!isConnected && <span className="font-bold text-md">Connect Wallet</span>}
-                <span className="truncate font-semibold">{principal?.toString()}</span>
-                <span className="truncate text-xs">{principal?.toString()}</span>
-              </div>
-              <ChevronsUpDown className="ml-auto size-4" />
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-            side={isMobile ? "bottom" : "right"}
-            align="end"
-            sideOffset={4}
-          >
-            <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+
+                size="lg"
+                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              >
                 <Avatar className="h-8 w-8 rounded-lg grayscale">
                   <AvatarImage src={`https://avatar.vercel.sh/${principal?.toString()}.png`} alt={principal?.toString()} />
+
                   <AvatarFallback className="rounded-lg">ICP</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
+                  {!isConnected && <span className="font-bold text-md">Connect Wallet</span>}
                   <span className="truncate font-semibold">{principal?.toString()}</span>
-                  <span className="truncate text-xs">{principal?.toString()}</span>
+                  <span className="truncate text-xs">Balance: {balance?.toString()}</span>
                 </div>
-              </div>
-            </DropdownMenuLabel>
-            {/* <DropdownMenuSeparator /> */}
-            {/* <DropdownMenuGroup>
+                <ChevronsUpDown className="ml-auto size-4" />
+              </SidebarMenuButton>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+              side={isMobile ? "bottom" : "right"}
+              align="end"
+              sideOffset={4}
+            >
+              <DropdownMenuLabel className="p-0 font-normal">
+                <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                  <Avatar className="h-8 w-8 rounded-lg grayscale">
+                    <AvatarImage src={`https://avatar.vercel.sh/${principal?.toString()}.png`} alt={principal?.toString()} />
+                    <AvatarFallback className="rounded-lg">ICP</AvatarFallback>
+                  </Avatar>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-semibold">{principal?.toString()}</span>
+                    <span className="truncate text-xs">{principal?.toString()}</span>
+                  </div>
+                </div>
+              </DropdownMenuLabel>
+              {/* <DropdownMenuSeparator /> */}
+              {/* <DropdownMenuGroup>
               <DropdownMenuItem>
                 <Sparkles />
                 Upgrade to Pro
               </DropdownMenuItem>
             </DropdownMenuGroup> */}
-            <DropdownMenuSeparator />
-            {/* <DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              {/* <DropdownMenuGroup>
               <DropdownMenuItem>
                 <BadgeCheck />
                 Account
@@ -105,22 +109,22 @@ export function NavUser() {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator /> */}
-            <DropdownMenuItem onClick={disconnect}>
-              <Unplug />
-             Disconnect Wallet
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        ) : 
-        
-        <Button className="w-full py-4" onClick={() => {
-          connect()
+              <DropdownMenuItem onClick={disconnect}>
+                <Unplug />
+                Disconnect Wallet
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) :
+
+          <Button className="w-full py-4" onClick={() => {
+            connect()
           }}>
             Connect Wallet
-        </Button>
-        
+          </Button>
+
         }
-        
+
       </SidebarMenuItem>
     </SidebarMenu>
   )

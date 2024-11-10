@@ -3,135 +3,144 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { AuthClient } from '@dfinity/auth-client';
 import { Principal } from '@dfinity/principal';
-import { HttpAgent, Actor } from '@dfinity/agent';
-import { idlFactory as ledgerIdlFactory, canisterId as ledgerCanisterId } from '@dfinity/ledger-icp';
-import { Button } from '@/components/ui/button';
+import { createAgent } from "@dfinity/utils";
+import { IDL } from '@dfinity/candid';
 
-// Types
+import { AccountIdentifier, LedgerCanister } from "@dfinity/ledger-icp";
+import { get } from 'http';
+
+// Ledger Canister ID for mainnet
+const LEDGER_CANISTER_ID = 'ryjl3-tyaaa-aaaaa-aaaba-cai';
+
+interface Token {
+  e8s: bigint;
+}
+
 interface IICPContext {
   isConnected: boolean;
   principal: Principal | null;
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
   getUserBalance: () => Promise<bigint | null>;
-  getProjectFunding: (projectId: string) => Promise<bigint | null>;
+  balance: bigint | null;
 }
 
 interface WalletProviderProps {
   children: ReactNode;
 }
 
-// Create Context
 const ICPContext = createContext<IICPContext>({
   isConnected: false,
   principal: null,
-  connect: async () => {},
-  disconnect: async () => {},
+  connect: async () => { },
+  disconnect: async () => { },
   getUserBalance: async () => null,
-  getProjectFunding: async () => null,
+  balance: null,
 });
 
-// Custom Hook
-export const useICP = () => useContext(ICPContext);
+export const useICP = (): IICPContext => {
+  const context = useContext(ICPContext);
+  if (!context) throw new Error('useICP must be used within an ICPProvider');
+  return context;
+};
 
-// Provider Component
 export const ICPProvider = ({ children }: WalletProviderProps) => {
   const [isConnected, setIsConnected] = useState(false);
   const [principal, setPrincipal] = useState<Principal | null>(null);
   const [authClient, setAuthClient] = useState<AuthClient | null>(null);
-  const [agent, setAgent] = useState<HttpAgent | null>(null);
+  const [balance, setBalance] = useState<bigint | null>(null);
 
-  // Initialize Auth Client
   useEffect(() => {
-    const init = async () => {
-      const client = await AuthClient.create();
+    AuthClient.create().then((client) => {
       setAuthClient(client);
-
-      if (await client.isAuthenticated()) {
-        handleAuthenticated(client);
-      }
-    };
-
-    init();
+      client.isAuthenticated().then((auth) => {
+        if (auth) handleAuthenticated(client);
+      });
+    });
   }, []);
 
   const handleAuthenticated = async (client: AuthClient) => {
     const identity = client.getIdentity();
-    const userPrincipal = identity.getPrincipal();
-    setPrincipal(userPrincipal);
+    setPrincipal(identity.getPrincipal());
     setIsConnected(true);
 
-    const newAgent = new HttpAgent({ identity });
-    setAgent(newAgent);
+   
   };
+
+  useEffect(()=> {
+    getUserBalance().then((userBalance) => {
+      setBalance(userBalance);
+    });
+  }, [principal, authClient])
 
   const connect = async () => {
     if (!authClient) return;
-
-    try {
-      await authClient.login({
-        identityProvider: process.env.NEXT_PUBLIC_II_URL || 'https://identity.ic0.app',
-        onSuccess: () => handleAuthenticated(authClient),
-      });
-    } catch (e) {
-      console.error('Failed to connect wallet:', e);
-    }
+    await authClient.login({
+      identityProvider: process.env.NEXT_PUBLIC_II_URL || 'https://identity.ic0.app',
+      onSuccess: () => handleAuthenticated(authClient),
+    });
   };
 
   const disconnect = async () => {
     if (!authClient) return;
-
     await authClient.logout();
     setPrincipal(null);
     setIsConnected(false);
   };
 
-  // Get User Balance
-  const getUserBalance = async (): Promise<bigint | null> => {
-    if (!agent || !principal) return null;
+  // Define the Ledger Canister IDL Factory
+  const createLedgerIDL = ({ IDL }: any) => {
+    const Token = IDL.Record({ 'e8s': IDL.Nat64 });
+    const Account = IDL.Record({
+      'owner': IDL.Principal,
+      'subaccount': IDL.Opt(IDL.Vec(IDL.Nat8))
+    });
+    return IDL.Service({
+      'account_balance': IDL.Func([Account], [Token], ['query']),
+    });
+  };
+
+  // Modify getUserBalance to use the createLedgerIDL function
+  const HOST = "https://identity.ic0.app/";
+  const MY_LEDGER_CANISTER_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+
+  const getUserBalance = async (
+  ): Promise<bigint | null> => {
+    if (!principal || !authClient) return null;
 
     try {
-      const ledgerActor = Actor.createActor(ledgerIdlFactory, {
+      const identity = authClient.getIdentity();
+      const agent = await createAgent({
+        identity,
+        host: HOST,
+      });
+
+      const ledgerCanisterId = Principal.fromText(MY_LEDGER_CANISTER_ID);
+      const ledgerCanister = LedgerCanister.create({
         agent,
         canisterId: ledgerCanisterId,
       });
 
-      const balanceResult = await ledgerActor.account_balance({
-        account: principal.toText(),
+      // Convert principal to account identifier
+      const accountId = AccountIdentifier.fromPrincipal({
+        principal: principal,
       });
 
-      return balanceResult.e8s; // Returns balance in e8s (smallest unit of ICP)
+      // Call with the correct argument format
+      const balance = await ledgerCanister.accountBalance({
+        accountIdentifier: accountId.toHex(),
+      });
+
+      return balance;
     } catch (error) {
       console.error('Failed to fetch user balance:', error);
-      return null;
+      throw error; // Re-throw to allow caller to handle specific errors
     }
   };
 
-  // Get Project Funding from Canister
-  const getProjectFunding = async (projectId: string): Promise<bigint | null> => {
-    if (!agent) return null;
-
-    try {
-      const canisterActor = Actor.createActor(idlFactory, { agent, canisterId: 'YOUR_CANISTER_ID' });
-      const project = await canisterActor.getProjectFunds(projectId);
-      return project ? project.totalFunds : null;
-    } catch (error) {
-      console.error('Failed to fetch project funding:', error);
-      return null;
-    }
-  };
 
   return (
-    <ICPContext.Provider
-      value={{
-        isConnected,
-        principal,
-        connect,
-        disconnect,
-        getUserBalance,
-        getProjectFunding,
-      }}
-    >
+    <ICPContext.Provider value={{ isConnected, principal, connect, disconnect, getUserBalance, balance }}>
       {children}
     </ICPContext.Provider>
   );
