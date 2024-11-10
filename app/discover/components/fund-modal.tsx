@@ -18,11 +18,12 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { supabase } from "@/lib/supabase"
 
 
 const FundModal = ({ }) => {
 
-  const { fundModalOpen, setFundModalOpen, selectedProject, } = useICP()
+  const { fundModalOpen, setFundModalOpen, selectedProject, setSelectedProject, principal } = useICP()
 
 
   const formSchema = z.object({
@@ -40,10 +41,33 @@ const FundModal = ({ }) => {
     },
   })
 
-  const onSubmit = (data: z.infer<typeof formSchema>) => {
-    console.log(data)
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    try {
+      if (!selectedProject) return;
+      if (!principal) {
+        throw new Error('Please connect your wallet first');
+      }
 
-    
+      // Start a Supabase transaction
+      const { data: transaction, error: transactionError } = await supabase.rpc('fund_project', {
+        p_project_id: selectedProject.id,
+        p_sender_id: principal.toString(),
+        p_amount: data.amount
+      });
+
+      if (transactionError) {
+        throw new Error('Failed to process transaction');
+      }
+
+      // Close the modal
+      setFundModalOpen(false);
+      
+      // Refresh the page to show updated amounts
+      window.location.reload();
+    } catch (error) {
+      console.error('Error funding project:', error);
+      // Here you might want to show an error message to the user
+    }
   }
 
   const progress = selectedProject ? (selectedProject.current_amount / selectedProject.goal_amount) * 100 : 0;

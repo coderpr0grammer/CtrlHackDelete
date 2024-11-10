@@ -32,3 +32,11 @@ export type DashboardLayout = {
     h: number
   }
 }
+
+export type Transaction = {
+  id: string
+  project_id: string
+  sender_id: string
+  amount: number
+  created_at: string
+}

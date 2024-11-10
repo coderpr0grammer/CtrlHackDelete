@@ -127,8 +127,7 @@ export const ICPProvider = ({ children }: WalletProviderProps) => {
   const HOST = process.env.NODE_ENV === 'production' ? "https://identity.ic0.app/" : "http://localhost:8000/";
   const MY_LEDGER_CANISTER_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 
-  const getUserBalance = async (
-  ): Promise<bigint | null> => {
+  const getUserBalance = async (): Promise<bigint | null> => {
     if (!principal || !authClient) return null;
 
     try {
@@ -149,15 +148,15 @@ export const ICPProvider = ({ children }: WalletProviderProps) => {
         principal: principal,
       });
 
-      // Call with the correct argument format
-      const balance = await ledgerCanister.accountBalance({
-        accountIdentifier: accountId.toHex(),
+      // Use the correct method signature
+      const balance = await ledgerCanister.balance({
+        accountIdentifier: accountId,
       });
 
       return balance;
     } catch (error) {
-      console.error('Failed to fetch user balance:', error);
-      throw error; // Re-throw to allow caller to handle specific errors
+      console.error('Error getting balance:', error);
+      return null;
     }
   };
 
