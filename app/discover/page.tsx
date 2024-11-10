@@ -36,7 +36,6 @@ async function getProjects(userId?: string) {
         current_amount,
         end_date,
         creator,
-        image_url,
         category,
         created_at,
         user_id
