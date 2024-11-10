@@ -15,38 +15,38 @@ function formatDate(dateString: string) {
 
 export function ProjectCard({ project }: { project: Project }) {
   const progress = (project.current_amount / project.goal_amount) * 100;
+  const daysLeft = Math.ceil((new Date(project.end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
 
   return (
-    <Card className="group transition-all duration-200 hover:shadow-lg">
+    <Card className="group relative transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
       <div className="flex justify-between flex-col h-full">
-        <div>
-          {project.image_url && (
-            <div className="relative aspect-[16/9] w-full overflow-hidden rounded-t-xl">
-              <img
-                src={project.image_url}
-                alt={project.title}
-                className="object-cover w-full h-full transition-transform duration-200 group-hover:scale-105"
-                onError={(e) => {
-                  (e.target as HTMLElement).parentElement!.style.display = 'none';
-                }}
-              />
-            </div>
-          )}
+        {project.image_url && (
+          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-t-xl">
+            <img
+              src={project.image_url}
+              alt={project.title}
+              className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+              onError={(e) => {
+                (e.target as HTMLElement).parentElement!.style.display = 'none';
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+          </div>
+        )}
 
-          <CardHeader className="space-y-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-xl font-semibold leading-none tracking-tight pr-2">
-                {project.title}
-              </CardTitle>
-              <span className="text-xs font-medium px-3 py-1 rounded-full bg-primary/10 text-primary">
-                {project.category}
-              </span>
-            </div>
-            <p className="text-sm text-muted-foreground line-clamp-2">
-              {project.description}
-            </p>
-          </CardHeader>
-        </div>
+        <CardHeader className="space-y-2">
+          <div className="flex items-center justify-between gap-4">
+            <CardTitle className="text-xl font-semibold leading-none tracking-tight line-clamp-1">
+              {project.title}
+            </CardTitle>
+            <span className="shrink-0 text-xs font-medium px-2.5 py-0.5 rounded-full bg-primary/10 text-primary">
+              {project.category}
+            </span>
+          </div>
+          <p className="text-sm text-muted-foreground line-clamp-2">
+            {project.description}
+          </p>
+        </CardHeader>
 
         <CardContent>
           <div className="space-y-4">
@@ -59,9 +59,9 @@ export function ProjectCard({ project }: { project: Project }) {
                   of ${project.goal_amount.toLocaleString()}
                 </span>
               </div>
-              <div className="h-2 w-full rounded-full bg-secondary">
+              <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-primary transition-all"
+                  className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
                   style={{
                     width: `${Math.min(progress, 100)}%`,
                   }}
@@ -73,7 +73,7 @@ export function ProjectCard({ project }: { project: Project }) {
                   <span>•</span>
                   <span>by {project.creator}</span>
                 </div>
-                <span className="font-medium">{formatDate(project.end_date)}</span>
+                <span className="font-medium text-destructive">{daysLeft} days left</span>
               </div>
             </div>
           </div>
@@ -83,7 +83,7 @@ export function ProjectCard({ project }: { project: Project }) {
           <Button 
             variant="default" 
             size="lg" 
-            className="w-full font-semibold transition-all hover:shadow-md"
+            className="w-full font-semibold transition-all hover:shadow-md group-hover:bg-primary/90"
           >
             Fund This Project
           </Button>
