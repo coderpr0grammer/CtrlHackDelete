@@ -1,7 +1,7 @@
 import { AuthClient } from "@dfinity/auth-client";
 import { Actor, Identity, HttpAgent } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import { AccountIdentifier } from "@dfinity/nns";
+import { AccountIdentifier } from "@dfinity/ledger-icp";
 
 // Ledger canister interface
 const LEDGER_CANISTER_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";
@@ -104,7 +104,7 @@ export class ICPWalletManager {
 
       // Get balance
       const balance = await ledgerActor.account_balance({
-        account: Array.from(accountIdentifier.bytes),
+        account: Array.from(accountIdentifier.toUint8Array()),
       });
 
       // Convert e8s to ICP (1 ICP = 100000000 e8s)
@@ -133,21 +133,7 @@ export class ICPWalletManager {
     };
   }
 
-  async listUserCanisters(): Promise<string[]> {
-    if (!this.identity) {
-      throw new Error("Not authenticated");
-    }
-
-    const managementCanister = Actor.createActor(/* management canister interface */, {
-      agent: new HttpAgent({
-        identity: this.identity,
-        host: "https://ic0.app"
-      }),
-      canisterId: "aaaaa-aa"
-    });
-
-    return [];
-  }
+ 
 }
 
 const walletManager = new ICPWalletManager();

@@ -27,7 +27,7 @@ import { SearchBar } from "./components/searchbar"
 import { ProjectGrid } from "./components/project-grid"
 
 
-export const searchProjects = (
+const searchProjects = (
   items: Project[],
   query: string | null
 ) => {
