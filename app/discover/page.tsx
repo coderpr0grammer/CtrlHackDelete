@@ -22,16 +22,11 @@ import { type Project } from "@/types/database"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ProjectCard } from "./components/project-card"
 
-async function getProjects() {
+async function getProjects(userId?: string) {
   try {
     console.log('Fetching projects...');
     
-    // Add timeout to prevent hanging requests
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Database request timed out')), 5000);
-    });
-
-    const queryPromise = supabase
+    let query = supabase
       .from('projects')
       .select(`
         id,
@@ -43,16 +38,17 @@ async function getProjects() {
         creator,
         image_url,
         category,
-        created_at
+        created_at,
+        user_id
       `)
-      .order('created_at', { ascending: false })
-      .throwOnError();
+      .order('created_at', { ascending: false });
 
-    // Race between timeout and actual query
-    const { data, error } = await Promise.race([
-      queryPromise,
-      timeoutPromise
-    ]) as any;
+    // If userId is provided, filter by it
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
+
+    const { data, error } = await query.throwOnError();
 
     if (error) {
       console.error('Database error:', error);

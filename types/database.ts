@@ -9,6 +9,7 @@ export type Project = {
   category: string
   image_url: string | null
   created_at: string
+  user_id: string
 }
 
 export type Dashboard = {

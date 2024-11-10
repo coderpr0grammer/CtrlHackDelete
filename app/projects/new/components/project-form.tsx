@@ -30,11 +30,14 @@ const categories = [
 
 export function ProjectForm({
   createProject,
+  userId,
 }: {
   createProject: (formData: FormData) => Promise<void>
+  userId: string
 }) {
   return (
     <form action={createProject}>
+      <input type="hidden" name="userId" value={userId} />
       <Card>
         <CardHeader>
           <CardTitle>Project Details</CardTitle>
