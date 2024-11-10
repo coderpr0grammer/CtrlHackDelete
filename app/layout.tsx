@@ -25,7 +25,7 @@ const getCanisterId = () => {
 };
 
 export const metadata: Metadata = {
-  title: "MarxistRaise",
+  title: "ISeedP",
   description: "Crowdfunding for the rest of us.",
 };
 

@@ -13,7 +13,7 @@ export default function HomePage() {
             <div className="flex items-center">
               <Image
                 src="/assets/bird-logo (1).webp"
-                alt="MarxistRaise"
+                alt="ISeedP"
                 width={70}
                 height={100}
                 className="cursor-pointer"
@@ -81,7 +81,6 @@ export default function HomePage() {
               </Link>
             </div>
           </motion.div>
-
           {/* Stats Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -126,7 +125,7 @@ export default function HomePage() {
                   className="w-full h-full object-cover"
                 >
                   <source 
-                    src="/assets/demo-video.mp4" 
+                    src="/assets/screenrun-11-10-2024-11-45-16.mp4" 
                     type="video/mp4"
                   />
                   Your browser does not support the video tag.
