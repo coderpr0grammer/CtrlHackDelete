@@ -159,34 +159,30 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar variant="inset" {...props}>
-      <SidebarHeader className="border-b border-sidebar-border/50">
+      <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <a href="#" className="flex items-center gap-3 px-2">
-                <div className="flex aspect-square size-10 items-center justify-center rounded-xl bg-gradient-to-br from-sidebar-primary to-sidebar-primary/80 text-sidebar-primary-foreground shadow-lg">
-                  <PersonStanding className="size-5" />
+              <a href="#">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                  <PersonStanding className="size-4" />
                 </div>
-                <div className="grid flex-1 text-left">
-                  <span className="text-base font-semibold tracking-tight">
-                    MarxistRaise
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    Crowdfunding for the rest of us.
-                  </span>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">MarxistRaise</span>
+                  <span className="truncate text-xs">Crowdfunding for the rest of us.</span>
                 </div>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-
-      <SidebarContent className="px-2 py-4">
+      <SidebarContent>
         <NavMain items={data.navMain} />
+        {/* <NavProjects projects={data.projects} /> */}
+        {/* <NavSecondary items={data.navSecondary} className="mt-auto" /> */}
       </SidebarContent>
-
-      <SidebarFooter className="border-t border-sidebar-border/50 bg-sidebar/50">
-        <NavUser />
+      <SidebarFooter>
+        <NavUser  />
       </SidebarFooter>
     </Sidebar>
   )

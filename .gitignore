@@ -36,4 +36,3 @@ yarn-error.log*
 next-env.d.ts
 
 /icp_project/node_modules
-/icp_project/.dfx

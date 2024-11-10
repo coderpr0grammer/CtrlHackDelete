@@ -3,7 +3,6 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { ICPProvider } from "./infrastructure/ICP/ICPContext";
 import './polyfills';
-import { Toaster } from "@/components/ui/toaster";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -44,7 +43,6 @@ export default function RootLayout({
       >
         <ICPProvider >
           {children}
-          <Toaster />
         </ICPProvider>
       </body>
     </html>
