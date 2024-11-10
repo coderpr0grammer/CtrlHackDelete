@@ -25,8 +25,8 @@ const getCanisterId = () => {
 };
 
 export const metadata: Metadata = {
-  title: "MarxistRaise",
-  description: "Crowdfunding for the rest of us.",
+  title: "I-Seed-P",
+  description: "I fund seed rounds",
 };
 
 export default function RootLayout({
