@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/sidebar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { PlusCircle } from "lucide-react"
+import { PlusCircle, Search } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { type Project } from "@/types/database"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -118,9 +118,9 @@ function ProjectCardSkeleton() {
 function ProjectGrid({ projects }: { projects: Project[] }) {
   if (!projects.length) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 text-center">
-        <p className="text-lg font-semibold">No projects found</p>
-        <p className="text-sm text-muted-foreground">
+      <div className="flex flex-col items-center justify-center p-12 text-center bg-secondary/30 rounded-lg">
+        <p className="text-lg font-medium">No projects found</p>
+        <p className="text-sm text-muted-foreground mt-1">
           Be the first to create a project!
         </p>
       </div>
@@ -128,7 +128,7 @@ function ProjectGrid({ projects }: { projects: Project[] }) {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-3">
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {projects.map((project) => (
         <ProjectCard key={project.id} project={project} />
       ))}
@@ -145,24 +145,32 @@ export default async function DiscoverPage() {
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2">
-            <div className="flex items-center gap-2 px-4">
-              <SidebarTrigger className="-ml-1" />
-              <Separator orientation="vertical" className="mr-2 h-4" />
+          <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="flex items-center gap-2">
+              <SidebarTrigger className="-ml-2" />
+              <Separator orientation="vertical" className="h-4" />
               <Breadcrumb>
                 <BreadcrumbList>
-                  <BreadcrumbItem className="hidden md:block">
-                    <BreadcrumbLink href="/discover">Discover</BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator className="hidden md:block" />
                   <BreadcrumbItem>
-                    <BreadcrumbPage>Projects</BreadcrumbPage>
+                    <BreadcrumbLink href="/discover" className="text-sm font-medium">
+                      Discover
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage className="text-sm font-medium">
+                      Projects
+                    </BreadcrumbPage>
                   </BreadcrumbItem>
                 </BreadcrumbList>
               </Breadcrumb>
             </div>
-            <div className="ml-auto mr-4">
-              <Button asChild>
+            <div className="ml-auto flex items-center gap-4">
+              <Button variant="outline" size="sm">
+                <Search className="mr-2 h-4 w-4" />
+                Search
+              </Button>
+              <Button size="sm" asChild>
                 <a href="/projects/new">
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Create Project

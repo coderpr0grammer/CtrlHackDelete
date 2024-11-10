@@ -13,10 +13,12 @@ function formatDate(dateString: string) {
 }
 
 export function ProjectCard({ project }: { project: Project }) {
+  const progress = (project.current_amount / project.goal_amount) * 100;
+  
   return (
-    <Card key={project.id}>
+    <Card className="hover:shadow-lg transition-shadow duration-200">
       {project.image_url && (
-        <div className="relative aspect-video w-full overflow-hidden rounded-t-xl">
+        <div className="relative aspect-[16/9] w-full overflow-hidden rounded-t-xl">
           <img
             src={project.image_url}
             alt={project.title}
@@ -27,35 +29,45 @@ export function ProjectCard({ project }: { project: Project }) {
           />
         </div>
       )}
-      <CardHeader>
-        <CardTitle>{project.title}</CardTitle>
+      <CardHeader className="space-y-2">
+        <div className="flex items-start justify-between">
+          <CardTitle className="text-lg font-medium leading-none">
+            {project.title}
+          </CardTitle>
+          <span className="text-xs font-medium px-2 py-1 rounded-full bg-secondary">
+            {project.category}
+          </span>
+        </div>
+        <p className="text-sm text-muted-foreground line-clamp-2">
+          {project.description}
+        </p>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <p className="text-sm text-muted-foreground line-clamp-2">
-            {project.description}
-          </p>
           <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>${project.current_amount.toLocaleString()} raised</span>
-              <span className="text-muted-foreground">
+            <div className="flex items-baseline justify-between text-sm">
+              <span className="font-medium">
+                ${project.current_amount.toLocaleString()}
+              </span>
+              <span className="text-muted-foreground text-xs">
                 of ${project.goal_amount.toLocaleString()}
               </span>
             </div>
-            <div className="h-2 w-full rounded-full bg-secondary">
+            <div className="h-1.5 w-full rounded-full bg-secondary">
               <div
-                className="h-full rounded-full bg-primary"
+                className="h-full rounded-full bg-primary transition-all"
                 style={{
-                  width: `${Math.min((project.current_amount / project.goal_amount) * 100, 100)}%`,
+                  width: `${Math.min(progress, 100)}%`,
                 }}
               />
             </div>
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>by {project.creator}</span>
-              <span>{project.category}</span>
-            </div>
-            <div className="text-xs text-muted-foreground">
-              Ends {formatDate(project.end_date)}
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <span>{Math.round(progress)}% funded</span>
+                <span>•</span>
+                <span>by {project.creator}</span>
+              </div>
+              <span>{formatDate(project.end_date)}</span>
             </div>
           </div>
         </div>
