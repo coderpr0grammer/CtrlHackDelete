@@ -1,6 +1,28 @@
 import { AuthClient } from "@dfinity/auth-client";
-import { Actor, Identity } from "@dfinity/agent";
+import { Actor, Identity, HttpAgent } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
+import { AccountIdentifier } from "@dfinity/nns";
+
+// Ledger canister interface
+const LEDGER_CANISTER_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+
+interface Token {
+  e8s: bigint;  // ICP tokens are denominated in e8s (1 ICP = 100000000 e8s)
+}
+
+interface LedgerCanister {
+  account_balance: (args: { account: Array<number> }) => Promise<Token>;
+}
+
+const ledgerIDL = ({ IDL }: any) => {
+  return IDL.Service({
+    account_balance: IDL.Func(
+      [IDL.Record({ account: IDL.Vec(IDL.Nat8) })],
+      [IDL.Record({ e8s: IDL.Nat64 })],
+      ['query']
+    ),
+  });
+};
 
 interface AccountInfo {
   principal: string;
@@ -11,12 +33,17 @@ interface AccountInfo {
 export class ICPWalletManager {
   private authClient: AuthClient | null = null;
   private identity: Identity | null = null;
+  private agent: HttpAgent | null = null;
 
   async initialize(): Promise<void> {
     this.authClient = await AuthClient.create();
     
     if (await this.authClient.isAuthenticated()) {
       this.identity = await this.authClient.getIdentity();
+      this.agent = new HttpAgent({
+        identity: this.identity,
+        host: "https://ic0.app"
+      });
     }
   }
 
@@ -57,27 +84,52 @@ export class ICPWalletManager {
     return this.identity.getPrincipal();
   }
 
-  async getAccountInfo(canisterId: string): Promise<AccountInfo> {
+  async getBalance(): Promise<number> {
+    if (!this.identity || !this.agent) {
+      throw new Error("Not authenticated");
+    }
+
+    try {
+      // Create account identifier from principal
+      const principal = this.identity.getPrincipal();
+      const accountIdentifier = AccountIdentifier.fromPrincipal({
+        principal: principal,
+      });
+
+      // Create ledger actor
+      const ledgerActor = Actor.createActor<LedgerCanister>(ledgerIDL, {
+        agent: this.agent,
+        canisterId: LEDGER_CANISTER_ID,
+      });
+
+      // Get balance
+      const balance = await ledgerActor.account_balance({
+        account: Array.from(accountIdentifier.bytes),
+      });
+
+      // Convert e8s to ICP (1 ICP = 100000000 e8s)
+      return Number(balance.e8s) / 100000000;
+    } catch (error) {
+      console.error("Error fetching balance:", error);
+      throw error;
+    }
+  }
+
+  async getAccountInfo(): Promise<AccountInfo> {
     if (!this.identity) {
       throw new Error("Not authenticated");
     }
 
-    const actor = Actor.createActor(idl, {
-      agent: new HttpAgent({
-        identity: this.identity,
-        host: "https://ic0.app"
-      }),
-      canisterId
-    });
-
     const principal = this.getPrincipal()!;
-    const accountId = /* derive account ID from principal */;
-    const balance = /* fetch balance */;
+    const accountIdentifier = AccountIdentifier.fromPrincipal({
+      principal: principal,
+    });
+    const balance = await this.getBalance();
 
     return {
       principal: principal.toString(),
-      accountIdentifier: accountId,
-      balance: balance
+      accountIdentifier: accountIdentifier.toHex(),
+      balance: BigInt(Math.floor(balance * 100000000)) // Convert back to e8s
     };
   }
 
@@ -100,23 +152,21 @@ export class ICPWalletManager {
 
 const walletManager = new ICPWalletManager();
 
-async function initializeAndConnect() {
+async function checkBalance() {
   await walletManager.initialize();
   
-  if (!walletManager.isConnected()) {
-    const connected = await walletManager.connect();
-    if (connected) {
-      console.log("Connected successfully!");
-      const principal = walletManager.getPrincipal();
-      console.log("Principal:", principal?.toString());
-      
-      const canisters = await walletManager.listUserCanisters();
-      console.log("User's canisters:", canisters);
-      
-      const accountInfo = await walletManager.getAccountInfo("your-canister-id");
-      console.log("Account info:", accountInfo);
-    } else {
-      console.error("Failed to connect");
+  if (walletManager.isConnected()) {
+    try {
+      const accountInfo = await walletManager.getAccountInfo();
+      console.log("Account Info:", {
+        principal: accountInfo.principal,
+        accountId: accountInfo.accountIdentifier,
+        balance: `${Number(accountInfo.balance) / 100000000} ICP`
+      });
+    } catch (error) {
+      console.error("Failed to fetch balance:", error);
     }
+  } else {
+    console.log("Please connect your wallet first");
   }
 }
