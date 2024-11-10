@@ -1,0 +1,204 @@
+import { Suspense } from "react"
+import { AppSidebar } from "@/components/app-sidebar"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
+import { Separator } from "@/components/ui/separator"
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { PlusCircle } from "lucide-react"
+import { supabase } from "@/lib/supabase"
+import { type Project } from "@/types/database"
+import { Skeleton } from "@/components/ui/skeleton"
+import { ProjectCard } from "./components/project-card"
+
+async function getProjects() {
+  try {
+    console.log('Fetching projects...');
+    
+    // Add timeout to prevent hanging requests
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Database request timed out')), 5000);
+    });
+
+    const queryPromise = supabase
+      .from('projects')
+      .select(`
+        id,
+        title,
+        description,
+        goal_amount,
+        current_amount,
+        end_date,
+        creator,
+        image_url,
+        category,
+        created_at
+      `)
+      .order('created_at', { ascending: false })
+      .throwOnError();
+
+    // Race between timeout and actual query
+    const { data, error } = await Promise.race([
+      queryPromise,
+      timeoutPromise
+    ]) as any;
+
+    if (error) {
+      console.error('Database error:', error);
+      throw new Error(`Failed to fetch projects: ${error.message}`);
+    }
+
+    if (!data || !Array.isArray(data)) {
+      console.warn('No data or invalid data format returned');
+      return [];
+    }
+
+    // Type validation
+    const projects = data.map(project => {
+      // Ensure all required fields exist and are of correct type
+      if (!project.id || !project.title || !project.description || 
+          typeof project.goal_amount !== 'number' || 
+          typeof project.current_amount !== 'number') {
+        console.warn('Invalid project data:', project);
+        return null;
+      }
+
+      // Convert date strings to proper format
+      try {
+        new Date(project.end_date).toISOString();
+      } catch (e) {
+        console.warn('Invalid date format for project:', project.id);
+        return null;
+      }
+
+      return project as Project;
+    }).filter((p): p is Project => p !== null);
+
+    console.log(`Successfully fetched ${projects.length} projects`);
+    return projects;
+
+  } catch (error) {
+    console.error('Error in getProjects:', error);
+    throw new Error(error instanceof Error ? error.message : 'Failed to fetch projects');
+  }
+}
+
+function ProjectCardSkeleton() {
+  return (
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-6 w-3/4" />
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <Skeleton className="h-4 w-full" />
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+            <Skeleton className="h-2 w-full" />
+            <div className="flex justify-between">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function ProjectGrid({ projects }: { projects: Project[] }) {
+  if (!projects.length) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-center">
+        <p className="text-lg font-semibold">No projects found</p>
+        <p className="text-sm text-muted-foreground">
+          Be the first to create a project!
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-4 md:grid-cols-3">
+      {projects.map((project) => (
+        <ProjectCard key={project.id} project={project} />
+      ))}
+    </div>
+  )
+}
+
+export default async function DiscoverPage() {
+  try {
+    const projects = await getProjects()
+    console.log('Rendered projects:', projects);
+    
+    return (
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2">
+            <div className="flex items-center gap-2 px-4">
+              <SidebarTrigger className="-ml-1" />
+              <Separator orientation="vertical" className="mr-2 h-4" />
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem className="hidden md:block">
+                    <BreadcrumbLink href="/discover">Discover</BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator className="hidden md:block" />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>Projects</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
+            <div className="ml-auto mr-4">
+              <Button asChild>
+                <a href="/projects/new">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Create Project
+                </a>
+              </Button>
+            </div>
+          </header>
+          <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+            <Suspense fallback={
+              <div className="grid gap-4 md:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <ProjectCardSkeleton key={i} />
+                ))}
+              </div>
+            }>
+              <ProjectGrid projects={projects} />
+            </Suspense>
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
+    )
+  } catch (error) {
+    console.error('Error in DiscoverPage:', error)
+    return (
+      <div className="p-4">
+        <p className="text-red-500">Error loading projects. Please try again later.</p>
+        <pre className="mt-2 text-sm text-muted-foreground">
+          {error instanceof Error ? error.message : 'Unknown error'}
+        </pre>
+      </div>
+    )
+  }
+}
+
