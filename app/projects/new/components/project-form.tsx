@@ -86,10 +86,10 @@ export function ProjectForm({
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <Label htmlFor="imageUrl">Image URL (optional)</Label>
             <Input id="imageUrl" name="imageUrl" type="url" />
-          </div>
+          </div> */}
         </CardContent>
         <CardFooter>
           <Button type="submit" className="w-full">
