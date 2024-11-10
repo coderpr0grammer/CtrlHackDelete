@@ -170,6 +170,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">ISeedP</span>
                   <span className="truncate text-xs">Crowdfunding for the rest of us.</span>
+                  <span className="truncate font-semibold">iSeedP</span>
+                  <span className="truncate text-xs">Seed crowdfunding on ICP</span>
                 </div>
               </a>
             </SidebarMenuButton>
