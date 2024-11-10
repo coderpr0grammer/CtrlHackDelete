@@ -127,10 +127,10 @@ export default async function DiscoverPage({
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
-          <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-4 border-b bg-background/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="flex items-center gap-4 flex-1">
+          <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="flex items-center gap-2">
               <SidebarTrigger className="-ml-2" />
-              <Separator orientation="vertical" className="h-6" />
+              <Separator orientation="vertical" className="h-4" />
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem>
@@ -147,11 +147,11 @@ export default async function DiscoverPage({
                 </BreadcrumbList>
               </Breadcrumb>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="ml-auto flex items-center gap-4">
               <SearchBar />
-              <Button size="sm" className="font-medium" asChild>
+              <Button size="sm" asChild>
                 <a href="/projects/new">
-                  <PlusCircle className="h-4 w-4 mr-2" />
+                  <PlusCircle className="h-4 w-4" />
                   Create Project
                 </a>
               </Button>
