@@ -1,12 +1,28 @@
 {
     "canisters": {
-        "hello_world": {
-            "type": "azle",
-            "main": "src/index.ts",
-            "declarations": {
-                "output": "test/dfx_generated/hello_world",
-                "node_compatibility": true
-            }
-        }
-    }
-}
+      "your_canister_name": {
+        "type": "custom",
+        "main": "src/index.ts",
+        "build": "npx azle build",
+        "candid": "src/your_canister_name.did",
+        "wasm": "src/your_canister_name.wasm"
+      }
+    },
+    "networks": {
+      "local": {
+        "bind": "127.0.0.1:8000",
+        "type": "ephemeral"
+      },
+      "ic": {
+        "providers": ["https://ic0.app"]
+      }
+    },
+    "defaults": {
+      "build": {
+        "packtool": ""
+      },
+      "network": "local"
+    },
+    "version": 1
+  }
+  

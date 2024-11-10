@@ -1,10 +1,10 @@
-'use client'
-// First, install required dependencies:
-// npm install @dfinity/agent @dfinity/auth-client @dfinity/identity @dfinity/principal
+'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { AuthClient } from '@dfinity/auth-client';
 import { Principal } from '@dfinity/principal';
+import { HttpAgent, Actor } from '@dfinity/agent';
+import { idlFactory as ledgerIdlFactory, canisterId as ledgerCanisterId } from '@dfinity/ledger-icp';
 import { Button } from '@/components/ui/button';
 
 // Types
@@ -13,6 +13,8 @@ interface IICPContext {
   principal: Principal | null;
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
+  getUserBalance: () => Promise<bigint | null>;
+  getProjectFunding: (projectId: string) => Promise<bigint | null>;
 }
 
 interface WalletProviderProps {
@@ -23,8 +25,10 @@ interface WalletProviderProps {
 const ICPContext = createContext<IICPContext>({
   isConnected: false,
   principal: null,
-  connect: async () => { },
-  disconnect: async () => { },
+  connect: async () => {},
+  disconnect: async () => {},
+  getUserBalance: async () => null,
+  getProjectFunding: async () => null,
 });
 
 // Custom Hook
@@ -35,6 +39,7 @@ export const ICPProvider = ({ children }: WalletProviderProps) => {
   const [isConnected, setIsConnected] = useState(false);
   const [principal, setPrincipal] = useState<Principal | null>(null);
   const [authClient, setAuthClient] = useState<AuthClient | null>(null);
+  const [agent, setAgent] = useState<HttpAgent | null>(null);
 
   // Initialize Auth Client
   useEffect(() => {
@@ -42,7 +47,6 @@ export const ICPProvider = ({ children }: WalletProviderProps) => {
       const client = await AuthClient.create();
       setAuthClient(client);
 
-      // Check if user is already authenticated
       if (await client.isAuthenticated()) {
         handleAuthenticated(client);
       }
@@ -56,6 +60,9 @@ export const ICPProvider = ({ children }: WalletProviderProps) => {
     const userPrincipal = identity.getPrincipal();
     setPrincipal(userPrincipal);
     setIsConnected(true);
+
+    const newAgent = new HttpAgent({ identity });
+    setAgent(newAgent);
   };
 
   const connect = async () => {
@@ -65,10 +72,6 @@ export const ICPProvider = ({ children }: WalletProviderProps) => {
       await authClient.login({
         identityProvider: process.env.NEXT_PUBLIC_II_URL || 'https://identity.ic0.app',
         onSuccess: () => handleAuthenticated(authClient),
-        windowOpenerFeatures:
-          `left=${window.screen.width / 2 - 525}, ` +
-          `top=${window.screen.height / 2 - 375}, ` +
-          `toolbar=0,location=0,menubar=0,width=1050,height=750`,
       });
     } catch (e) {
       console.error('Failed to connect wallet:', e);
@@ -83,8 +86,52 @@ export const ICPProvider = ({ children }: WalletProviderProps) => {
     setIsConnected(false);
   };
 
+  // Get User Balance
+  const getUserBalance = async (): Promise<bigint | null> => {
+    if (!agent || !principal) return null;
+
+    try {
+      const ledgerActor = Actor.createActor(ledgerIdlFactory, {
+        agent,
+        canisterId: ledgerCanisterId,
+      });
+
+      const balanceResult = await ledgerActor.account_balance({
+        account: principal.toText(),
+      });
+
+      return balanceResult.e8s; // Returns balance in e8s (smallest unit of ICP)
+    } catch (error) {
+      console.error('Failed to fetch user balance:', error);
+      return null;
+    }
+  };
+
+  // Get Project Funding from Canister
+  const getProjectFunding = async (projectId: string): Promise<bigint | null> => {
+    if (!agent) return null;
+
+    try {
+      const canisterActor = Actor.createActor(idlFactory, { agent, canisterId: 'YOUR_CANISTER_ID' });
+      const project = await canisterActor.getProjectFunds(projectId);
+      return project ? project.totalFunds : null;
+    } catch (error) {
+      console.error('Failed to fetch project funding:', error);
+      return null;
+    }
+  };
+
   return (
-    <ICPContext.Provider value={{ isConnected, principal, connect, disconnect }}>
+    <ICPContext.Provider
+      value={{
+        isConnected,
+        principal,
+        connect,
+        disconnect,
+        getUserBalance,
+        getProjectFunding,
+      }}
+    >
       {children}
     </ICPContext.Provider>
   );

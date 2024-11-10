@@ -148,12 +148,12 @@ export default async function DiscoverPage({
             </div>
             <div className="ml-auto flex items-center gap-4">
               <SearchBar />
-              <Button size="sm" asChild>
+              {/* <Button size="sm" asChild>
                 <a href="/projects/new">
                   <PlusCircle className="h-4 w-4" />
                   Create Project
                 </a>
-              </Button>
+              </Button> */}
             </div>
           </header>
 

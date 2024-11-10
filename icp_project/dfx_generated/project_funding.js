@@ -36,25 +36,41 @@ import { IDL, query, update } from 'azle';
 let default_1 = (() => {
     var _a;
     let _instanceExtraInitializers = [];
-    let _getMessage_decorators;
-    let _setMessage_decorators;
+    let _fundProject_decorators;
+    let _getProjectFunds_decorators;
+    let _getAllProjects_decorators;
     return _a = class default_1 {
             constructor() {
-                this.message = (__runInitializers(this, _instanceExtraInitializers), 'Hello world!');
+                this.projects = (__runInitializers(this, _instanceExtraInitializers), {});
             }
-            getMessage() {
-                return this.message;
+            // Method to fund a project
+            fundProject(projectId, amount) {
+                if (this.projects[projectId]) {
+                    this.projects[projectId].totalFunds += amount; // Add to existing funds
+                }
+                else {
+                    // If project does not exist, create it
+                    this.projects[projectId] = { id: projectId, name: `Project ${projectId}`, totalFunds: amount };
+                }
+                return `Funded ${amount} cycles to Project ${projectId}`;
             }
-            setMessage(message) {
-                this.message = message;
+            // Query method to get the funding details for a project
+            getProjectFunds(projectId) {
+                return this.projects[projectId] || null;
+            }
+            // Query method to retrieve all projects with funding details
+            getAllProjects() {
+                return Object.values(this.projects);
             }
         },
         (() => {
             const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
-            _getMessage_decorators = [query([], IDL.Text)];
-            _setMessage_decorators = [update([IDL.Text])];
-            __esDecorate(_a, null, _getMessage_decorators, { kind: "method", name: "getMessage", static: false, private: false, access: { has: obj => "getMessage" in obj, get: obj => obj.getMessage }, metadata: _metadata }, null, _instanceExtraInitializers);
-            __esDecorate(_a, null, _setMessage_decorators, { kind: "method", name: "setMessage", static: false, private: false, access: { has: obj => "setMessage" in obj, get: obj => obj.setMessage }, metadata: _metadata }, null, _instanceExtraInitializers);
+            _fundProject_decorators = [update([IDL.Text, IDL.Nat64])];
+            _getProjectFunds_decorators = [query([IDL.Text], IDL.Opt(IDL.Record({ id: IDL.Text, name: IDL.Text, totalFunds: IDL.Nat64 })))];
+            _getAllProjects_decorators = [query([], IDL.Vec(IDL.Record({ id: IDL.Text, name: IDL.Text, totalFunds: IDL.Nat64 })))];
+            __esDecorate(_a, null, _fundProject_decorators, { kind: "method", name: "fundProject", static: false, private: false, access: { has: obj => "fundProject" in obj, get: obj => obj.fundProject }, metadata: _metadata }, null, _instanceExtraInitializers);
+            __esDecorate(_a, null, _getProjectFunds_decorators, { kind: "method", name: "getProjectFunds", static: false, private: false, access: { has: obj => "getProjectFunds" in obj, get: obj => obj.getProjectFunds }, metadata: _metadata }, null, _instanceExtraInitializers);
+            __esDecorate(_a, null, _getAllProjects_decorators, { kind: "method", name: "getAllProjects", static: false, private: false, access: { has: obj => "getAllProjects" in obj, get: obj => obj.getAllProjects }, metadata: _metadata }, null, _instanceExtraInitializers);
             if (_metadata) Object.defineProperty(_a, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
         })(),
         _a;
