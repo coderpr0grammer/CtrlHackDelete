@@ -9,6 +9,7 @@ import { IDL } from '@dfinity/candid';
 import { AccountIdentifier, LedgerCanister } from "@dfinity/ledger-icp";
 import { get } from 'http';
 import { Project } from '@/types/database';
+import { useLocalStorage } from '@/hooks/useLocalstorage';
 
 // Ledger Canister ID for mainnet
 const LEDGER_CANISTER_ID = 'ryjl3-tyaaa-aaaaa-aaaba-cai';
@@ -29,6 +30,7 @@ interface IICPContext {
   setFundModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   selectedProject: Project | null;
   setSelectedProject: React.Dispatch<React.SetStateAction<Project | null>>;
+  userBalance: number;
 }
 
 interface WalletProviderProps {
@@ -46,7 +48,8 @@ const ICPContext = createContext<IICPContext>({
   fundModalOpen: false,
   setFundModalOpen: () => { },
   selectedProject: null,
-  setSelectedProject: () => { }
+  setSelectedProject: () => { },
+  userBalance: 0,
 });
 
 export const useICP = (): IICPContext => {
@@ -63,6 +66,8 @@ export const ICPProvider = ({ children }: WalletProviderProps) => {
   const [fundModalOpen, setFundModalOpen] = useState(false);
 
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+
+  const [userBalance, setUserBalance] = useLocalStorage<number>('userBalance', 1000000);
 
   const toggleFundModal = () => {
     setFundModalOpen(!fundModalOpen);
@@ -235,7 +240,8 @@ export const ICPProvider = ({ children }: WalletProviderProps) => {
       fundModalOpen,
       setFundModalOpen,
       selectedProject,
-      setSelectedProject
+      setSelectedProject,
+      userBalance
     }}>
       {children}
     </ICPContext.Provider>

@@ -37,11 +37,8 @@ import { useEffect } from "react"
 export function NavUser() {
   const { isMobile } = useSidebar()
 
-  const { isConnected, principal, connect, disconnect, balance } = useICP();
+  const { isConnected, principal, connect, disconnect, balance, userBalance } = useICP();
 
-  useEffect(() => { 
-   console.log("balance", balance)
-  }, [balance])
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -63,7 +60,7 @@ export function NavUser() {
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   {!isConnected && <span className="font-bold text-md">Connect Wallet</span>}
                   <span className="truncate font-semibold">{principal?.toString()}</span>
-                  <span className="truncate text-xs">Balance: {balance?.toString()}</span>
+                  <span className="truncate text-xs">Balance: {userBalance?.toString()} ICP</span>
                 </div>
                 <ChevronsUpDown className="ml-auto size-4" />
               </SidebarMenuButton>
@@ -82,7 +79,7 @@ export function NavUser() {
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">{principal?.toString()}</span>
-                    <span className="truncate text-xs">{principal?.toString()}</span>
+                    <span className="truncate text-xs">Balance: {userBalance?.toString()} ICP</span>
                   </div>
                 </div>
               </DropdownMenuLabel>
