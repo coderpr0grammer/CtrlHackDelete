@@ -89,28 +89,3 @@ export const ICPProvider = ({ children }: WalletProviderProps) => {
     </ICPContext.Provider>
   );
 };
-
-// Usage Example Component
-export const ConnectWalletButton = () => {
-  const { isConnected, connect, disconnect, principal } = useICP();
-
-  return (
-    <div>
-
-      <Button
-        onClick={() => {
-          if (isConnected) {
-            connect()
-
-          } else {
-            disconnect()
-          }
-        }}
-        className=""
-      >
-        {principal ? `Wallet: ${principal.toString().substring(0, 5)}...${principal.toString().substring(principal.toString().length - 5)}` : 'Connect Wallet'}
-      </Button>
-
-    </div>
-  );
-};

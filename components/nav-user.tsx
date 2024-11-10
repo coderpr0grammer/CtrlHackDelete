@@ -7,6 +7,7 @@ import {
   CreditCard,
   LogOut,
   Sparkles,
+  Unplug,
 } from "lucide-react"
 
 import {
@@ -29,34 +30,36 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { useICP } from "@/app/infrastructure/ICP/ICPContext"
+import { Button } from "./ui/button"
 
-export function NavUser({
-  user,
-}: {
-  user: {
-    name: string
-    email: string
-    avatar: string
-  }
-}) {
+export function NavUser() {
   const { isMobile } = useSidebar()
+
+  const { isConnected, principal, connect, disconnect } = useICP();
 
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <DropdownMenu>
+
+        {isConnected ? (
+          <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
+           
+              
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+              <Avatar className="h-8 w-8 rounded-lg grayscale">
+                <AvatarImage src={`https://avatar.vercel.sh/${principal?.toString()}.png`} alt={principal?.toString()} />
+
+                <AvatarFallback className="rounded-lg">ICP</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{user.name}</span>
-                <span className="truncate text-xs">{user.email}</span>
+                {!isConnected && <span className="font-bold text-md">Connect Wallet</span>}
+                <span className="truncate font-semibold">{principal?.toString()}</span>
+                <span className="truncate text-xs">{principal?.toString()}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -69,25 +72,25 @@ export function NavUser({
           >
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                <Avatar className="h-8 w-8 rounded-lg grayscale">
+                  <AvatarImage src={`https://avatar.vercel.sh/${principal?.toString()}.png`} alt={principal?.toString()} />
+                  <AvatarFallback className="rounded-lg">ICP</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{user.name}</span>
-                  <span className="truncate text-xs">{user.email}</span>
+                  <span className="truncate font-semibold">{principal?.toString()}</span>
+                  <span className="truncate text-xs">{principal?.toString()}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
+            {/* <DropdownMenuSeparator /> */}
+            {/* <DropdownMenuGroup>
               <DropdownMenuItem>
                 <Sparkles />
                 Upgrade to Pro
               </DropdownMenuItem>
-            </DropdownMenuGroup>
+            </DropdownMenuGroup> */}
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
+            {/* <DropdownMenuGroup>
               <DropdownMenuItem>
                 <BadgeCheck />
                 Account
@@ -101,13 +104,23 @@ export function NavUser({
                 Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <LogOut />
-              Log out
+            <DropdownMenuSeparator /> */}
+            <DropdownMenuItem onClick={disconnect}>
+              <Unplug />
+             Disconnect Wallet
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        ) : 
+        
+        <Button className="w-full py-4" onClick={() => {
+          connect()
+          }}>
+            Connect Wallet
+        </Button>
+        
+        }
+        
       </SidebarMenuItem>
     </SidebarMenu>
   )
