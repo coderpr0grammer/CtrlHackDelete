@@ -1,3 +1,8 @@
+import { Button } from "@/components/ui/button";
+import { DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { ArrowUpDown, ChevronDown, Filter, LayoutGrid } from "lucide-react";
+
 export function ProjectFilters() {
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -6,7 +11,7 @@ export function ProjectFilters() {
           placeholder="Search projects..."
           className="h-9 w-[150px] lg:w-[250px]"
         />
-        <DropdownMenu>
+        <DropdownMenuContent>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="h-9 w-[150px]">
               <Filter className="mr-2 h-4 w-4" />
@@ -21,7 +26,7 @@ export function ProjectFilters() {
             <DropdownMenuCheckboxItem>Environment</DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem>Community</DropdownMenuCheckboxItem>
           </DropdownMenuContent>
-        </DropdownMenu>
+        </DropdownMenuContent>
       </div>
       <div className="flex items-center space-x-2">
         <Button variant="outline" size="sm" className="h-9">

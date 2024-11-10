@@ -31,7 +31,7 @@ export function ProjectCard({ project }: { project: Project }) {
       )}
       <CardHeader className="space-y-2">
         <div className="flex items-start justify-between">
-          <CardTitle className="text-lg font-medium leading-none">
+          <CardTitle className="text-lg font-medium leading-none pr-2">
             {project.title}
           </CardTitle>
           <span className="text-xs font-medium px-2 py-1 rounded-full bg-secondary">
