@@ -4,17 +4,8 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { AuthClient } from '@dfinity/auth-client';
 import { Principal } from '@dfinity/principal';
 import { createAgent } from "@dfinity/utils";
-import { IDL } from '@dfinity/candid';
 
 import { AccountIdentifier, LedgerCanister } from "@dfinity/ledger-icp";
-import { get } from 'http';
-
-// Ledger Canister ID for mainnet
-const LEDGER_CANISTER_ID = 'ryjl3-tyaaa-aaaaa-aaaba-cai';
-
-interface Token {
-  e8s: bigint;
-}
 
 interface IICPContext {
   isConnected: boolean;
@@ -63,11 +54,10 @@ export const ICPProvider = ({ children }: WalletProviderProps) => {
     const identity = client.getIdentity();
     setPrincipal(identity.getPrincipal());
     setIsConnected(true);
-
-   
   };
 
   useEffect(()=> {
+    if (!principal || !authClient) return;
     getUserBalance().then((userBalance) => {
       setBalance(userBalance);
     });
@@ -88,18 +78,6 @@ export const ICPProvider = ({ children }: WalletProviderProps) => {
     setIsConnected(false);
   };
 
-  // Define the Ledger Canister IDL Factory
-  const createLedgerIDL = ({ IDL }: any) => {
-    const Token = IDL.Record({ 'e8s': IDL.Nat64 });
-    const Account = IDL.Record({
-      'owner': IDL.Principal,
-      'subaccount': IDL.Opt(IDL.Vec(IDL.Nat8))
-    });
-    return IDL.Service({
-      'account_balance': IDL.Func([Account], [Token], ['query']),
-    });
-  };
-
   // Modify getUserBalance to use the createLedgerIDL function
   const HOST = "https://identity.ic0.app/";
   const MY_LEDGER_CANISTER_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";
@@ -116,6 +94,7 @@ export const ICPProvider = ({ children }: WalletProviderProps) => {
       });
 
       const ledgerCanisterId = Principal.fromText(MY_LEDGER_CANISTER_ID);
+
       const ledgerCanister = LedgerCanister.create({
         agent,
         canisterId: ledgerCanisterId,
@@ -137,6 +116,45 @@ export const ICPProvider = ({ children }: WalletProviderProps) => {
       throw error; // Re-throw to allow caller to handle specific errors
     }
   };
+
+  const fundProject = async (projectAccountId: string, amount: bigint): Promise<void> => {
+    if (!principal || !authClient || !balance || balance < amount) return;
+  
+    try {
+      const identity = authClient.getIdentity();
+      const agent = await createAgent({
+        identity,
+        host: HOST,
+      });
+  
+      const ledgerCanisterId = Principal.fromText(MY_LEDGER_CANISTER_ID);
+      const ledgerCanister = LedgerCanister.create({
+        agent,
+        canisterId: ledgerCanisterId,
+      });
+  
+      const fromAccountId = AccountIdentifier.fromPrincipal({
+        principal: principal,
+      }).toHex();
+  
+      await ledgerCanister.send({
+        from: fromAccountId,
+        to: projectAccountId,
+        amount: { e8s: amount }, // ICP uses e8s (10^8 e8s = 1 ICP)
+      });
+  
+      // Update balance and tracking info after funding
+      const updatedBalance = await getUserBalance();
+      setBalance(updatedBalance);
+  
+      // Optionally log contribution off-chain or on-chain in your backend
+      console.log(`Contributed ${amount} e8s to project with account ${projectAccountId}`);
+    } catch (error) {
+      console.error('Failed to fund project:', error);
+      throw error;
+    }
+  };
+  
 
 
   return (
