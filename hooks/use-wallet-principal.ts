@@ -1,4 +1,4 @@
-import { useICP } from "@/infrastructure/ICP/ICPContext"
+import { useICP } from "@/app/infrastructure/ICP/ICPContext"
 
 export function useWalletPrincipal() {
   const { principal } = useICP()

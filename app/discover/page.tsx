@@ -1,3 +1,5 @@
+
+// Update your DiscoverPage.tsx
 import { Suspense } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import {
@@ -14,15 +16,41 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, Search } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { type Project } from "@/types/database"
-import { Skeleton } from "@/components/ui/skeleton"
 import { ProjectCard } from "./components/project-card"
+import { Input } from "@/components/ui/input"
+import Fuse from "fuse.js"
+import { SearchBar } from "./components/searchbar"
 
-async function getProjects(userId?: string) {
+
+export const searchProjects = (
+  items: Project[],
+  query: string | null
+) => {
+  if (!query) return items;
+
+  const options = {
+    keys: ['title', 'description'],
+    threshold: 0.4,
+    ignoreLocation: true,
+  };
+
+  const searchWords = query.toLowerCase().split(' ');
+  const fuse = new Fuse(items, options);
+
+  let filteredItems = items;
+  searchWords.forEach((word) => {
+    filteredItems = fuse.search(word).map(result => result.item);
+  });
+
+  return filteredItems;
+};
+
+// Modify getProjects to accept searchQuery
+async function getProjects(searchQuery?: string | null, userId?: string) {
   try {
     console.log('Fetching projects...');
     
@@ -42,7 +70,6 @@ async function getProjects(userId?: string) {
       `)
       .order('created_at', { ascending: false });
 
-    // If userId is provided, filter by it
     if (userId) {
       query = query.eq('user_id', userId);
     }
@@ -50,38 +77,33 @@ async function getProjects(userId?: string) {
     const { data, error } = await query.throwOnError();
 
     if (error) {
-      console.error('Database error:', error);
       throw new Error(`Failed to fetch projects: ${error.message}`);
     }
 
     if (!data || !Array.isArray(data)) {
-      console.warn('No data or invalid data format returned');
       return [];
     }
 
-    // Type validation
-    const projects = data.map(project => {
-      // Ensure all required fields exist and are of correct type
-      if (!project.id || !project.title || !project.description || 
-          typeof project.goal_amount !== 'number' || 
-          typeof project.current_amount !== 'number') {
-        console.warn('Invalid project data:', project);
-        return null;
-      }
+    const projects = data
+      .map(project => {
+        if (!project.id || !project.title || !project.description || 
+            typeof project.goal_amount !== 'number' || 
+            typeof project.current_amount !== 'number') {
+          return null;
+        }
 
-      // Convert date strings to proper format
-      try {
-        new Date(project.end_date).toISOString();
-      } catch (e) {
-        console.warn('Invalid date format for project:', project.id);
-        return null;
-      }
+        try {
+          new Date(project.end_date).toISOString();
+        } catch (e) {
+          return null;
+        }
 
-      return project as Project;
-    }).filter((p): p is Project => p !== null);
+        return project as Project;
+      })
+      .filter((p): p is Project => p !== null);
 
-    console.log(`Successfully fetched ${projects.length} projects`);
-    return projects;
+    // Apply search if query exists
+    return searchQuery ? searchProjects(projects, searchQuery) : projects;
 
   } catch (error) {
     console.error('Error in getProjects:', error);
@@ -89,36 +111,10 @@ async function getProjects(userId?: string) {
   }
 }
 
-function ProjectCardSkeleton() {
-  return (
-    <Card>
-      <CardHeader>
-        <Skeleton className="h-6 w-3/4" />
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <Skeleton className="h-4 w-full" />
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-4 w-24" />
-            </div>
-            <Skeleton className="h-2 w-full" />
-            <div className="flex justify-between">
-              <Skeleton className="h-3 w-20" />
-              <Skeleton className="h-3 w-16" />
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
 function ProjectGrid({ projects }: { projects: Project[] }) {
   if (!projects.length) {
     return (
-      <div className="flex flex-col items-center justify-center p-12 text-center bg-secondary/30 rounded-lg">
+      <div className="flex flex-col items-center justify-center p-12 h-full text-center bg-secondary/30 rounded-lg">
         <p className="text-lg font-medium">No projects found</p>
         <p className="text-sm text-muted-foreground mt-1">
           Be the first to create a project!
@@ -136,10 +132,15 @@ function ProjectGrid({ projects }: { projects: Project[] }) {
   )
 }
 
-export default async function DiscoverPage() {
+
+// Update the page component to use searchParams
+export default async function DiscoverPage({
+  searchParams,
+}: {
+  searchParams: { q?: string }
+}) {
   try {
-    const projects = await getProjects()
-    console.log('Rendered projects:', projects);
+    const projects = await getProjects(searchParams.q)
     
     return (
       <SidebarProvider>
@@ -166,26 +167,18 @@ export default async function DiscoverPage() {
               </Breadcrumb>
             </div>
             <div className="ml-auto flex items-center gap-4">
-              <Button variant="outline" size="sm">
-                <Search className="mr-2 h-4 w-4" />
-                Search
-              </Button>
+              <SearchBar />
               <Button size="sm" asChild>
                 <a href="/projects/new">
-                  <PlusCircle className="mr-2 h-4 w-4" />
+                  <PlusCircle className="h-4 w-4" />
                   Create Project
                 </a>
               </Button>
             </div>
           </header>
-          <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-            <Suspense fallback={
-              <div className="grid gap-4 md:grid-cols-3">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <ProjectCardSkeleton key={i} />
-                ))}
-              </div>
-            }>
+
+          <div className="flex flex-1 flex-col gap-4 p-4">
+            <Suspense fallback={<ProjectGrid projects={[]} />}>
               <ProjectGrid projects={projects} />
             </Suspense>
           </div>
@@ -204,4 +197,3 @@ export default async function DiscoverPage() {
     )
   }
 }
-

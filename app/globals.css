@@ -40,6 +40,7 @@ body {
     --sidebar-accent: 220 15% 94%;
     --sidebar-accent-foreground: 220 10% 15%;
     --sidebar-border: 220 15% 90%;
+    --radius: 0.5rem;
   }
   .dark {
     --background: 220 20% 12%;
@@ -68,6 +69,8 @@ body {
     --sidebar-accent: 220 15% 20%;
     --sidebar-accent-foreground: 220 10% 95%;
     --sidebar-border: 220 15% 25%;
+    --radius: 0.5rem;
+
   }
 }
 
