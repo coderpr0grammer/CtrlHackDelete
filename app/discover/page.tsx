@@ -159,7 +159,9 @@ export default async function DiscoverPage({
           </header>
 
           <div className="flex flex-1 flex-col gap-4 p-4">
-            <Suspense fallback={<ProjectGrid projects={[]} />}>
+            <Suspense fallback={
+            <ProjectGrid projects={[]} />
+            }>
               <ProjectGrid projects={projects} />
             </Suspense>
           </div>

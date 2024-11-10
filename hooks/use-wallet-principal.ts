@@ -1,3 +1,4 @@
+
 import { useICP } from "@/app/infrastructure/ICP/ICPContext"
 
 export function useWalletPrincipal() {

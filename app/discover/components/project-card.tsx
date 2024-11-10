@@ -3,6 +3,8 @@
 import { type Project } from "@/types/database"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
+import { useICP } from "@/app/infrastructure/ICP/ICPContext";
+import Image from "next/image";
 
 // Add a utility function for consistent date formatting
 function formatDate(dateString: string) {
@@ -16,6 +18,9 @@ function formatDate(dateString: string) {
 export function ProjectCard({ project }: { project: Project }) {
   const progress = (project.current_amount / project.goal_amount) * 100;
 
+  const { setFundModalOpen, setSelectedProject } = useICP()
+
+
   return (
     <Card className="">
       <div className="flex justify-between flex-col h-full">
@@ -23,7 +28,9 @@ export function ProjectCard({ project }: { project: Project }) {
         <div>
           {project.image_url && (
             <div className="relative aspect-[16/9] w-full overflow-hidden rounded-t-xl">
-              <img
+              <Image
+                width={200}
+                height={200}
                 src={project.image_url}
                 alt={project.title}
                 className="object-cover w-full h-full"
@@ -47,41 +54,46 @@ export function ProjectCard({ project }: { project: Project }) {
               {project.description}
             </p>
           </CardHeader>
-          </div>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-baseline justify-between text-sm">
-                  <span className="font-medium">
-                    ${project.current_amount.toLocaleString()}
-                  </span>
-                  <span className="text-muted-foreground text-xs">
-                    of ${project.goal_amount.toLocaleString()}
-                  </span>
+        </div>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-baseline justify-between text-sm">
+                <span className="font-medium">
+                  ${project.current_amount.toLocaleString()}
+                </span>
+                <span className="text-muted-foreground text-xs">
+                  of ${project.goal_amount.toLocaleString()}
+                </span>
+              </div>
+              <div className="h-1.5 w-full rounded-full bg-secondary">
+                <div
+                  className="h-full rounded-full bg-primary transition-all"
+                  style={{
+                    width: `${Math.min(progress, 100)}%`,
+                  }}
+                />
+              </div>
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <span>{Math.round(progress)}% funded</span>
+                  <span>•</span>
+                  <span>by {project.creator}</span>
                 </div>
-                <div className="h-1.5 w-full rounded-full bg-secondary">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all"
-                    style={{
-                      width: `${Math.min(progress, 100)}%`,
-                    }}
-                  />
-                </div>
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <span>{Math.round(progress)}% funded</span>
-                    <span>•</span>
-                    <span>by {project.creator}</span>
-                  </div>
-                  <span>{formatDate(project.end_date)}</span>
-                </div>
+                <span>{formatDate(project.end_date)}</span>
               </div>
             </div>
-          </CardContent>
-        
+          </div>
+        </CardContent>
+
         <CardFooter>
-          <Button variant="default" size="lg" className=" w-full">
-            Fund
+          <Button onClick={(() => {
+
+            setSelectedProject(project)
+            setFundModalOpen(true)
+
+          })} variant="default" size="lg" className=" w-full shadow-lg text-md p-6">
+            Fund this Project
           </Button>
         </CardFooter>
       </div>

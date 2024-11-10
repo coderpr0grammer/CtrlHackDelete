@@ -1,5 +1,7 @@
 import { Project } from "@/types/database";
 import { ProjectCard } from "./project-card";
+import { Button } from "@/components/ui/button"
+import FundModal from "./fund-modal";
 
 export function ProjectGrid({ projects }: { projects: Project[] }) {
     if (!projects.length) {
@@ -15,6 +17,7 @@ export function ProjectGrid({ projects }: { projects: Project[] }) {
   
     return (
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
+        <FundModal/>
         {projects.map((project) => (
           <ProjectCard key={project.id} project={project} />
         ))}

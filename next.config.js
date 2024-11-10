@@ -11,6 +11,15 @@ const nextConfig = {
     }
     return config;
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'loremflickr.com',
+        port: '',
+      },
+    ],
+  },
 }
 
 module.exports = nextConfig 

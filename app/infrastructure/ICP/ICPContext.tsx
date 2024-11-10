@@ -8,6 +8,7 @@ import { IDL } from '@dfinity/candid';
 
 import { AccountIdentifier, LedgerCanister } from "@dfinity/ledger-icp";
 import { get } from 'http';
+import { Project } from '@/types/database';
 
 // Ledger Canister ID for mainnet
 const LEDGER_CANISTER_ID = 'ryjl3-tyaaa-aaaaa-aaaba-cai';
@@ -23,6 +24,11 @@ interface IICPContext {
   disconnect: () => Promise<void>;
   getUserBalance: () => Promise<bigint | null>;
   balance: bigint | null;
+  toggleFundModal: () => void;
+  fundModalOpen: boolean;
+  setFundModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  selectedProject: Project | null;
+  setSelectedProject: React.Dispatch<React.SetStateAction<Project | null>>;
 }
 
 interface WalletProviderProps {
@@ -36,6 +42,11 @@ const ICPContext = createContext<IICPContext>({
   disconnect: async () => { },
   getUserBalance: async () => null,
   balance: null,
+  toggleFundModal: () => { },
+  fundModalOpen: false,
+  setFundModalOpen: () => { },
+  selectedProject: null,
+  setSelectedProject: () => { }
 });
 
 export const useICP = (): IICPContext => {
@@ -49,6 +60,13 @@ export const ICPProvider = ({ children }: WalletProviderProps) => {
   const [principal, setPrincipal] = useState<Principal | null>(null);
   const [authClient, setAuthClient] = useState<AuthClient | null>(null);
   const [balance, setBalance] = useState<bigint | null>(null);
+  const [fundModalOpen, setFundModalOpen] = useState(false);
+
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+
+  const toggleFundModal = () => {
+    setFundModalOpen(!fundModalOpen);
+  }
 
   useEffect(() => {
     AuthClient.create().then((client) => {
@@ -64,10 +82,10 @@ export const ICPProvider = ({ children }: WalletProviderProps) => {
     setPrincipal(identity.getPrincipal());
     setIsConnected(true);
 
-   
+
   };
 
-  useEffect(()=> {
+  useEffect(() => {
     getUserBalance().then((userBalance) => {
       setBalance(userBalance);
     });
@@ -101,7 +119,7 @@ export const ICPProvider = ({ children }: WalletProviderProps) => {
   };
 
   // Modify getUserBalance to use the createLedgerIDL function
-  const HOST = "https://identity.ic0.app/";
+  const HOST = process.env.NODE_ENV === 'production' ? "https://identity.ic0.app/" : "http://localhost:8000/";
   const MY_LEDGER_CANISTER_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 
   const getUserBalance = async (
@@ -139,8 +157,86 @@ export const ICPProvider = ({ children }: WalletProviderProps) => {
   };
 
 
+
+  const handleTransfer = async (amount: number, recipientAddress: string) => {
+
+
+    try {
+      if (!principal || !isConnected) {
+        throw new Error('Please connect your wallet first');
+      }
+
+      const numericAmount = amount
+      if (isNaN(numericAmount) || numericAmount <= 0) {
+        throw new Error('Please enter a valid amount');
+      }
+
+      // Convert ICP to e8s (1 ICP = 100000000 e8s)
+      const e8sAmount = BigInt(Math.floor(numericAmount * 100000000));
+
+      if (balance && e8sAmount > balance) {
+        throw new Error('Insufficient funds');
+      }
+
+      const LEDGER_CANISTER_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+
+      // Create agent and ledger canister instance
+
+      const identity = authClient?.getIdentity();
+      if (!identity) throw new Error('Failed to get identity');
+
+      const agent = await createAgent({
+        identity,
+        host: HOST,
+      });
+
+      const ledgerCanister = LedgerCanister.create({
+        agent,
+        canisterId: Principal.fromText(LEDGER_CANISTER_ID),
+      });
+
+      // Convert recipient address to AccountIdentifier
+      let recipientAccountId;
+      try {
+        // First try to parse as a Principal
+        const recipientPrincipal = Principal.fromText(recipientAddress);
+        recipientAccountId = AccountIdentifier.fromPrincipal({
+          principal: recipientPrincipal,
+        });
+      } catch {
+        // If that fails, try to parse as an AccountIdentifier directly
+        recipientAccountId = AccountIdentifier.fromHex(recipientAddress);
+      }
+
+      // Send the transfer
+      const result = await ledgerCanister.transfer({
+        to: recipientAccountId,
+        amount: e8sAmount,
+      });
+
+      console.log(`Transfer successful! Block height: ${result}`);
+
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Unknown error');
+    }
+  };
+
+
+
   return (
-    <ICPContext.Provider value={{ isConnected, principal, connect, disconnect, getUserBalance, balance }}>
+    <ICPContext.Provider value={{
+      isConnected,
+      principal,
+      connect,
+      disconnect,
+      getUserBalance,
+      balance,
+      toggleFundModal,
+      fundModalOpen,
+      setFundModalOpen,
+      selectedProject,
+      setSelectedProject
+    }}>
       {children}
     </ICPContext.Provider>
   );
