@@ -1,8 +1,8 @@
 Game plan:
-- connecting wallet and looking at the apps on the ICP
+- Connecting wallet and looking at the apps on the ICP (accounts)
 - Gofundme for ICP
-- 
-- 
+- Set up ICP transfer to the actual projects
+- Dashboard for transactions 
 
 
 
