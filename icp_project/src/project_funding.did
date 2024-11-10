@@ -1,0 +1,35 @@
+type ProjectDetails = record {
+    id : text;
+    name : text;
+    description : text;
+    target_amount : nat64;
+    current_amount : nat64;
+    owner : principal;
+    status : text;
+    created_at : nat64;
+};
+
+type Result = variant {
+    Ok : ProjectDetails;
+    Err : text;
+};
+
+type CreateProjectArgs = record {
+    name : text;
+    description : text;
+    target_amount : nat64;
+};
+
+service : {
+    // Project management
+    create_project : (CreateProjectArgs) -> (Result);
+    get_project : (text) -> (Result) query;
+    get_project_funds : (text) -> (nat64) query;
+    
+    // Funding operations
+    fund_project : (text, nat64) -> (Result);
+    
+    // Query operations
+    get_all_projects : () -> (vec ProjectDetails) query;
+    get_user_projects : (principal) -> (vec ProjectDetails) query;
+};

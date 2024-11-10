@@ -1,11 +1,11 @@
 {
     "canisters": {
-      "your_canister_name": {
+      "project_funding": {
         "type": "custom",
         "main": "src/index.ts",
         "build": "npx azle build",
-        "candid": "src/your_canister_name.did",
-        "wasm": "src/your_canister_name.wasm"
+        "candid": "src/project_funding.did",
+        "wasm": "src/project_funding.wasm"
       }
     },
     "networks": {
