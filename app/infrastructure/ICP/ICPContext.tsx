@@ -1,9 +1,11 @@
+'use client'
 // First, install required dependencies:
 // npm install @dfinity/agent @dfinity/auth-client @dfinity/identity @dfinity/principal
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { AuthClient } from '@dfinity/auth-client';
 import { Principal } from '@dfinity/principal';
+import { Button } from '@/components/ui/button';
 
 // Types
 interface IICPContext {
@@ -21,8 +23,8 @@ interface WalletProviderProps {
 const ICPContext = createContext<IICPContext>({
   isConnected: false,
   principal: null,
-  connect: async () => {},
-  disconnect: async () => {},
+  connect: async () => { },
+  disconnect: async () => { },
 });
 
 // Custom Hook
@@ -63,7 +65,7 @@ export const ICPProvider = ({ children }: WalletProviderProps) => {
       await authClient.login({
         identityProvider: process.env.NEXT_PUBLIC_II_URL || 'https://identity.ic0.app',
         onSuccess: () => handleAuthenticated(authClient),
-        windowOpenerFeatures: 
+        windowOpenerFeatures:
           `left=${window.screen.width / 2 - 525}, ` +
           `top=${window.screen.height / 2 - 375}, ` +
           `toolbar=0,location=0,menubar=0,width=1050,height=750`,
@@ -94,24 +96,21 @@ export const ConnectWalletButton = () => {
 
   return (
     <div>
-      {!isConnected ? (
-        <button
-          onClick={connect}
-          className="px-4 py-2 bg-blue-500 text-white rounded"
-        >
-          Connect ICP Wallet
-        </button>
-      ) : (
-        <div>
-          <p>Connected: {principal?.toString()}</p>
-          <button
-            onClick={disconnect}
-            className="px-4 py-2 bg-red-500 text-white rounded"
-          >
-            Disconnect
-          </button>
-        </div>
-      )}
+
+      <Button
+        onClick={() => {
+          if (isConnected) {
+            connect()
+
+          } else {
+            disconnect()
+          }
+        }}
+        className=""
+      >
+        {principal ? `Wallet: ${principal.toString().substring(0, 5)}...${principal.toString().substring(principal.toString().length - 5)}` : 'Connect Wallet'}
+      </Button>
+
     </div>
   );
 };
