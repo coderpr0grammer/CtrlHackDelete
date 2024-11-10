@@ -3,7 +3,9 @@
 import {
   BadgeCheck,
   Bell,
+  Check,
   ChevronsUpDown,
+  Copy,
   CreditCard,
   LogOut,
   Sparkles,
@@ -32,7 +34,8 @@ import {
 } from "@/components/ui/sidebar"
 import { useICP } from "@/app/infrastructure/ICP/ICPContext"
 import { Button } from "./ui/button"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
+import { toast } from "sonner"
 
 export function NavUser() {
   const { isMobile } = useSidebar()
@@ -42,6 +45,20 @@ export function NavUser() {
   useEffect(() => { 
    console.log("balance", balance)
   }, [balance])
+
+  const [copied, setCopied] = useState(false);
+  const copyAddress = () => {
+    if (!principal) return;
+    setCopied(true);
+    toast.success("Address copied to clipboard");
+    navigator.clipboard.writeText(principal?.toString());
+
+    setTimeout(() => {
+      setCopied(false);
+    }, 2000);
+
+  };
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -109,6 +126,10 @@ export function NavUser() {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator /> */}
+            <DropdownMenuItem onClick={copyAddress}>
+                {copied ? <Check  /> : <Copy  />}
+                Copy Address
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={disconnect}>
                 <Unplug />
                 Disconnect Wallet
