@@ -1,182 +1,116 @@
+'use client'
 
-// Update your DiscoverPage.tsx
-import { Suspense } from "react"
-import { AppSidebar } from "@/components/app-sidebar"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar"
-import { Button } from "@/components/ui/button"
-import { PlusCircle, Search } from "lucide-react"
-import { supabase } from "@/lib/supabase"
+import { useEffect, useState } from "react"
 import { type Project } from "@/types/database"
-import { ProjectCard } from "./components/project-card"
-import { Input } from "@/components/ui/input"
-import Fuse from "fuse.js"
-import { SearchBar } from "./components/searchbar"
+import { supabase } from "@/lib/supabase"
 import { ProjectGrid } from "./components/project-grid"
+import { AppSidebar } from "@/components/app-sidebar"
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { Button } from "@/components/ui/button"
+import { PlusCircle } from "lucide-react"
+import Link from "next/link"
 
+export default function DiscoverPage() {
+  const [projects, setProjects] = useState<Project[]>([])
+  const [loading, setLoading] = useState(true)
 
-const searchProjects = (
-  items: Project[],
-  query: string | null
-) => {
-  if (!query) return items;
+  const fetchProjects = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select(`
+          id,
+          title,
+          description,
+          goal_amount,
+          current_amount,
+          end_date,
+          creator,
+          image_url,
+          category,
+          created_at,
+          user_id
+        `)
+        .order('created_at', { ascending: false })
 
-  const options = {
-    keys: ['title', 'description'],
-    threshold: 0.4,
-    ignoreLocation: true,
-  };
+      if (error) throw error
 
-  const searchWords = query.toLowerCase().split(' ');
-  const fuse = new Fuse(items, options);
+      if (data) {
+        const validProjects = data
+          .map(project => {
+            if (!project.id || !project.title || !project.description || 
+                typeof project.goal_amount !== 'number' || 
+                typeof project.current_amount !== 'number') {
+              return null
+            }
 
-  let filteredItems = items;
-  searchWords.forEach((word) => {
-    filteredItems = fuse.search(word).map(result => result.item);
-  });
+            try {
+              new Date(project.end_date).toISOString()
+            } catch (e) {
+              return null
+            }
 
-  return filteredItems;
-};
+            return project as Project
+          })
+          .filter((p): p is Project => p !== null)
 
-// Modify getProjects to accept searchQuery
-async function getProjects(searchQuery?: string | null, userId?: string) {
-  try {
-    console.log('Fetching projects...');
-    
-    let query = supabase
-      .from('projects')
-      .select(`
-        id,
-        title,
-        description,
-        goal_amount,
-        current_amount,
-        end_date,
-        creator,
-        image_url,
-        category,
-        created_at,
-        user_id
-      `)
-      .order('created_at', { ascending: false });
-
-    if (userId) {
-      query = query.eq('user_id', userId);
+        setProjects(validProjects)
+      }
+    } catch (error) {
+      console.error('Error fetching projects:', error)
+    } finally {
+      setLoading(false)
     }
-
-    const { data, error } = await query.throwOnError();
-
-    if (error) {
-      throw new Error(`Failed to fetch projects: ${error.message}`);
-    }
-
-    if (!data || !Array.isArray(data)) {
-      return [];
-    }
-
-    const projects = data
-      .map(project => {
-        if (!project.id || !project.title || !project.description || 
-            typeof project.goal_amount !== 'number' || 
-            typeof project.current_amount !== 'number') {
-          return null;
-        }
-
-        try {
-          new Date(project.end_date).toISOString();
-        } catch (e) {
-          return null;
-        }
-
-        return project as Project;
-      })
-      .filter((p): p is Project => p !== null);
-
-    // Apply search if query exists
-    return searchQuery ? searchProjects(projects, searchQuery) : projects;
-
-  } catch (error) {
-    console.error('Error in getProjects:', error);
-    throw new Error(error instanceof Error ? error.message : 'Failed to fetch projects');
   }
-}
 
+  // Fetch projects on initial load
+  useEffect(() => {
+    fetchProjects()
 
-// Update the page component to use searchParams
-export default async function DiscoverPage({
-  searchParams,
-}: {
-  searchParams: { q?: string }
-}) {
-  try {
-    const projects = await getProjects(searchParams.q)
-    
-    return (
-      <SidebarProvider>
-        <AppSidebar />
-        <SidebarInset>
-          <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="flex items-center gap-2">
-              <SidebarTrigger className="-ml-2" />
-              <Separator orientation="vertical" className="h-4" />
-              <Breadcrumb>
-                <BreadcrumbList>
-                  <BreadcrumbItem>
-                    <BreadcrumbLink href="/discover" className="text-sm font-medium">
-                      Discover
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage className="text-sm font-medium">
-                      Projects
-                    </BreadcrumbPage>
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
-            </div>
-            <div className="ml-auto flex items-center gap-4">
-              <SearchBar />
-              {/* <Button size="sm" asChild>
-                <a href="/projects/new">
-                  <PlusCircle className="h-4 w-4" />
-                  Create Project
-                </a>
-              </Button> */}
-            </div>
-          </header>
+    // Set up real-time subscription
+    const subscription = supabase
+      .channel('projects-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'projects' }, 
+        () => {
+          fetchProjects()
+        }
+      )
+      .subscribe()
 
-          <div className="flex flex-1 flex-col gap-4 p-4">
-            <Suspense fallback={
-            <ProjectGrid projects={[]} />
-            }>
-              <ProjectGrid projects={projects} />
-            </Suspense>
+    // Cleanup subscription
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [])
+
+  return (
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <header className="flex items-center justify-between border-b px-4 py-3">
+          <div>
+            <h1 className="text-lg font-semibold">Discover Projects</h1>
+            <p className="text-sm text-muted-foreground">
+              Browse and fund innovative projects
+            </p>
           </div>
-        </SidebarInset>
-      </SidebarProvider>
-    )
-  } catch (error) {
-    console.error('Error in DiscoverPage:', error)
-    return (
-      <div className="p-4">
-        <p className="text-red-500">Error loading projects. Please try again later.</p>
-        <pre className="mt-2 text-sm text-muted-foreground">
-          {error instanceof Error ? error.message : 'Unknown error'}
-        </pre>
-      </div>
-    )
-  }
+          <Link href="/projects/new">
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              New Project
+            </Button>
+          </Link>
+        </header>
+
+        <div className="flex flex-1 flex-col gap-4 p-4">
+          {loading ? (
+            <div>Loading projects...</div>
+          ) : (
+            <ProjectGrid projects={projects} />
+          )}
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
+  )
 }
