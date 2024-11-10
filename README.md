@@ -1,7 +1,8 @@
 Game plan:
-- connecting wallet and looking at the apps on the IPC
-- Gofundme for IPC
-
+- connecting wallet and looking at the apps on the ICP
+- Gofundme for ICP
+- 
+- 
 
 
 
