@@ -12,20 +12,22 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { PersonStanding } from "lucide-react"
+import { LoaderCircle, PersonStanding } from "lucide-react"
 import Image from "next/image"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { supabase } from "@/lib/supabase"
+import { useState } from "react"
 
 
 const FundModal = ({ }) => {
 
-  const { fundModalOpen, setFundModalOpen, selectedProject, setSelectedProject, principal } = useICP()
+  const { fundModalOpen, setFundModalOpen, selectedProject, setSelectedProject, principal, userBalance, setUserBalance } = useICP()
 
 
+  const [loading, setLoading] = useState(false);
   const formSchema = z.object({
     amount: z.coerce.number({
       message: "Please enter an amount",
@@ -41,18 +43,19 @@ const FundModal = ({ }) => {
     },
   })
 
-  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+  const onSubmit = async (formData: z.infer<typeof formSchema>) => {
     try {
       if (!selectedProject) return;
       if (!principal) {
         throw new Error('Please connect your wallet first');
       }
 
+      setLoading(true)
       // Start a Supabase transaction
       const { data: transaction, error: transactionError } = await supabase.rpc('fund_project', {
         p_project_id: selectedProject.id,
         p_sender_id: principal.toString(),
-        p_amount: data.amount
+        p_amount: formData.amount
       });
 
       if (transactionError) {
@@ -61,12 +64,16 @@ const FundModal = ({ }) => {
 
       // Close the modal
       setFundModalOpen(false);
+
+      setUserBalance(userBalance - formData.amount);
       
       // Refresh the page to show updated amounts
       window.location.reload();
     } catch (error) {
       console.error('Error funding project:', error);
       // Here you might want to show an error message to the user
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -180,7 +187,7 @@ const FundModal = ({ }) => {
 
               </div>
               <DialogFooter>
-                <Button type="submit">Send Funds</Button>
+                <Button type="submit">{loading ? <LoaderCircle className=" h-4 w-4 animate-spin" /> : 'Send Funds'}</Button>
               </DialogFooter>
             </form>
           </Form>

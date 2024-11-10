@@ -31,6 +31,7 @@ interface IICPContext {
   selectedProject: Project | null;
   setSelectedProject: React.Dispatch<React.SetStateAction<Project | null>>;
   userBalance: number;
+  setUserBalance: React.Dispatch<React.SetStateAction<number>>;
 }
 
 interface WalletProviderProps {
@@ -50,6 +51,7 @@ const ICPContext = createContext<IICPContext>({
   selectedProject: null,
   setSelectedProject: () => { },
   userBalance: 0,
+  setUserBalance: () => { },
 });
 
 export const useICP = (): IICPContext => {
@@ -99,10 +101,12 @@ export const ICPProvider = ({ children }: WalletProviderProps) => {
   const connect = async () => {
     if (!authClient) return;
     await authClient.login({
-      identityProvider: process.env.NEXT_PUBLIC_II_URL || 'https://identity.ic0.app',
+      identityProvider: 'https://identity.internetcomputer.org',  // testnet II URL
       onSuccess: () => handleAuthenticated(authClient),
+      // Optional: Add derivationOrigin for local development
+      derivationOrigin: 'http://localhost:3000'
     });
-  };
+};
 
   const disconnect = async () => {
     if (!authClient) return;
@@ -124,43 +128,46 @@ export const ICPProvider = ({ children }: WalletProviderProps) => {
   };
 
   // Modify getUserBalance to use the createLedgerIDL function
-  const HOST = process.env.NODE_ENV === 'production' ? "https://identity.ic0.app/" : "http://localhost:8000/";
+  const HOST = "https://identity.ic0.app/";
   const MY_LEDGER_CANISTER_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 
-  const getUserBalance = async (): Promise<bigint | null> => {
-    if (!principal || !authClient) return null;
-
-    try {
-      const identity = authClient.getIdentity();
-      const agent = await createAgent({
-        identity,
-        host: HOST,
-      });
-
-      const ledgerCanisterId = Principal.fromText(MY_LEDGER_CANISTER_ID);
-      const ledgerCanister = LedgerCanister.create({
-        agent,
-        canisterId: ledgerCanisterId,
-      });
-
-      // Convert principal to account identifier
-      const accountId = AccountIdentifier.fromPrincipal({
-        principal: principal,
-      });
-
-      // Use the correct method signature
-      const balance = await ledgerCanister.balance({
-        accountIdentifier: accountId,
-      });
-
-      return balance;
-    } catch (error) {
-      console.error('Error getting balance:', error);
-      return null;
-    }
-  };
+  const getUserBalance = async (
+    ): Promise<bigint | null> => {
+      if (!principal || !authClient) return null;
+  
+      try {
+        const identity = authClient.getIdentity();
 
 
+        const agent = await createAgent({
+          identity,
+          host: HOST,
+        });
+  
+        const ledgerCanisterId = Principal.fromText(MY_LEDGER_CANISTER_ID);
+
+        const ledgerCanister = LedgerCanister.create({
+          agent,
+          canisterId: ledgerCanisterId,
+        });
+  
+        // Convert principal to account identifier
+        const accountId = AccountIdentifier.fromPrincipal({
+          principal: principal,
+        });
+  
+        // Call with the correct argument format
+        const balance = await ledgerCanister.accountBalance({
+          accountIdentifier: accountId.toHex(),
+        });
+  
+        return balance;
+      } catch (error) {
+        console.error('Failed to fetch user balance:', error);
+        throw error; // Re-throw to allow caller to handle specific errors
+      }
+    };
+  
 
   const handleTransfer = async (amount: number, recipientAddress: string) => {
 
@@ -240,7 +247,8 @@ export const ICPProvider = ({ children }: WalletProviderProps) => {
       setFundModalOpen,
       selectedProject,
       setSelectedProject,
-      userBalance
+      userBalance,
+      setUserBalance, 
     }}>
       {children}
     </ICPContext.Provider>
