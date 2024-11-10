@@ -104,7 +104,7 @@ export const ICPProvider = ({ children }: WalletProviderProps) => {
       identityProvider: 'https://identity.internetcomputer.org',  // testnet II URL
       onSuccess: () => handleAuthenticated(authClient),
       // Optional: Add derivationOrigin for local development
-      derivationOrigin: 'http://localhost:3000'
+      // derivationOrigin: window
     });
 };
 
